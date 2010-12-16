@@ -79,6 +79,12 @@ public class WebIntent extends Plugin {
 				} else {
 					return new PluginResult(PluginResult.Status.ERROR);
 				}
+			} else if (action.equals("getDataString")) {
+				if (args.length() != 0) {
+					return new PluginResult(PluginResult.Status.INVALID_ACTION);
+				}
+				Intent i = this.ctx.getIntent();
+				return new PluginResult(PluginResult.Status.OK, i.getDataString());
 			}
 			return new PluginResult(PluginResult.Status.INVALID_ACTION);
 		} catch (JSONException e) {
