@@ -41,6 +41,15 @@ Gets the extra that this app was invoked with. For example:
             // There was no extra supplied.
         }
     );
+    
+### getDataString ###
+Gets the data URL this intent is operating on in string form. For example:
+
+    window.plugins.webintent.getDataString(WebIntent.EXTRA_TEXT, 
+        function(dataString) {
+            // dataString is the data URL string.
+        }, function() {}
+    );
 	
 ## Licence ##
 
