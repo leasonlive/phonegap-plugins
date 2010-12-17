@@ -36,12 +36,12 @@ WebIntent.prototype.getExtra = function(params, success, fail) {
     }, 'WebIntent', 'getExtra', [params]);
 };
 
-WebIntent.prototype.getDataString = function(params, success, fail) {
+WebIntent.prototype.getDataString = function(success, fail) {
 	return PhoneGap.exec(function(args) {
         success(args);
     }, function(args) {
         fail(args);
-    }, 'WebIntent', 'getDataString', [params]);
+    }, 'WebIntent', 'getDataString', []);
 };
 
 PhoneGap.addConstructor(function() {
