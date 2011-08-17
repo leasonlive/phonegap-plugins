@@ -2,13 +2,16 @@ package com.borismus.webintent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 
 import com.phonegap.api.Plugin;
 import com.phonegap.api.PluginResult;
@@ -24,7 +27,8 @@ import com.phonegap.api.PluginResult;
  *
  */
 public class WebIntent extends Plugin {
-
+	public static final int REQUEST_CODE = 0x0ba7c0df;
+	private String callback;
 	/**
 	 * Executes the request and returns PluginResult.
 	 * 
@@ -58,8 +62,35 @@ public class WebIntent extends Plugin {
 				}
 				
 				startActivity(obj.getString("action"), uri, type, extrasMap);
-				return new PluginResult(PluginResult.Status.OK);
+				PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
+				r.setKeepCallback(true);
+				return r;
+			} else if (action.equals("startActivityForResult")) {
+				if(args.length() != 1) {
+					return new PluginResult(PluginResult.Status.INVALID_ACTION);
+				}
+				this.callback = callbackId;
+				// Parse the arguments
+				JSONObject obj = args.getJSONObject(0);
+				String type = obj.has("type") ? obj.getString("type") : null;
+				Uri uri = obj.has("url") ? Uri.parse(obj.getString("url")) : null;
+				JSONObject extras = obj.has("extras") ? obj.getJSONObject("extras") : null;
+				Map<String, String> extrasMap = new HashMap<String, String>();
 				
+				// Populate the extras if any exist
+				if (extras != null) {
+					JSONArray extraNames = extras.names();
+					for (int i = 0; i < extraNames.length(); i++) {
+						String key = extraNames.getString(i);
+						String value = extras.getString(key);
+						extrasMap.put(key, value);
+					}
+				}
+				
+				this.startActivityForResult(obj.getString("action"), uri, type, extrasMap);
+				PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
+				r.setKeepCallback(true);
+				return r;
 			} else if (action.equals("hasExtra")) {
 				if (args.length() != 1) {
 					return new PluginResult(PluginResult.Status.INVALID_ACTION);
@@ -103,5 +134,52 @@ public class WebIntent extends Plugin {
 			i.putExtra(key, value);
 		}
 		this.ctx.startActivity(i);
+	}
+	void startActivityForResult(String action, Uri uri, String type, Map<String, String> extras) {
+		System.out.println("startActivityForResult invoked");
+		Intent i = (uri != null ? new Intent(action, uri) : new Intent(action));
+		i.addCategory(Intent.CATEGORY_DEFAULT);
+		if (type != null) {
+			i.setType(type);
+		}
+		for (String key : extras.keySet()) {
+			String value = extras.get(key);
+			i.putExtra(key, value);
+		}
+		this.ctx.startActivityForResult((Plugin) this, i, REQUEST_CODE);
+	}
+	/**
+     * Called when the activity exits
+     *
+     * @param requestCode		The request code originally supplied to startActivityForResult(),
+     * 							allowing you to identify who this result came from.
+     * @param resultCode		The integer result code returned by the child activity through its setResult().
+     * @param intent			An Intent, which can return result data to the caller (various data can be attached to Intent "extras").
+     */
+	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		System.out.println("onActivityResult invoked");
+		if (requestCode == REQUEST_CODE) {
+			if (resultCode == Activity.RESULT_OK) {
+				JSONObject json = new JSONObject();
+				Bundle bundle = intent.getExtras();
+				Set<String> names = bundle.keySet();
+				for (String name : names) {
+					//not support object value, if support object value, need the gson
+					Object value = bundle.get(name);
+					System.out.println(name + ":" + value);
+					try {
+						json.put(name, value);
+					} catch (JSONException e) {
+						e.printStackTrace();
+						this.error(new PluginResult(PluginResult.Status.ERROR, e.getMessage()), this.callback);
+						return;
+					}
+				}
+				System.out.println("json:" + json.toString());
+				this.success(new PluginResult(PluginResult.Status.OK, json), this.callback);
+			} else {
+				this.error(new PluginResult(PluginResult.Status.ERROR), this.callback);
+			}
+		}
 	}
 }
