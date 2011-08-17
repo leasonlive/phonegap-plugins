@@ -19,7 +19,13 @@ WebIntent.prototype.startActivity = function(params, success, fail) {
         fail(args);
     }, 'WebIntent', 'startActivity', [params]);
 };
-
+WebIntent.prototype.startActivityForResult = function(params, success, fail) {
+	return PhoneGap.exec(function(args) {
+        success(args);
+    }, function(args) {
+        fail(args);
+    }, 'WebIntent', 'startActivityForResult', [params]);
+};
 WebIntent.prototype.hasExtra = function(params, success, fail) {
 	return PhoneGap.exec(function(args) {
         success(args);
